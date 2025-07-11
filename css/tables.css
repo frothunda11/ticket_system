@@ -1,0 +1,68 @@
+.table_instance {
+  display: block;
+  overflow: auto;
+  width: 100%;
+}
+
+.padding-global {
+  padding-right: 5%;
+  padding-left: 5%;
+  color: black;
+}
+
+.table_table {
+  width: 100%;
+  border-collapse: collapse;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(221, 221, 221);
+  text-align: left;
+}
+
+.table_head {
+  background-color: rgb(243, 243, 243);
+}
+
+.table_row {
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(221, 221, 221);
+  text-align: left;
+}
+
+.table_cell {
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(221, 221, 221);
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: .85rem;
+  color: rgb(68, 68, 68);
+}
+
+.table_header {
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(184, 184, 184);
+  padding: 8px;
+  text-align: left;
+  font-size: .85rem;
+  color: rgb(4, 23, 56);
+}
+
+.table_row:nth-child(even) {
+  background-color: rgb(243, 243, 243);
+}
+
+.water-group {
+  background-color: #d7ebf9; 
+}
+
+.gen1-group {
+  background-color: #e0f7fa; 
+}
+
+.gen2-group {
+  background-color: #e8eaf6; 
+}
