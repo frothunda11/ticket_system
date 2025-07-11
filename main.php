@@ -61,83 +61,6 @@ if (!empty($facilityList)) {
 //sql for charts
 $placeholders = implode(',', array_fill(0, count($facilities), '?'));
 
-$sql = "
-SELECT 
-  f.id AS facility_id,
-  f.name AS facility_name,
-  ROUND(AVG(DISTINCT c.water_level), 0) AS water_level,
-  MAX(g1.diesel_level_percent) AS diesel_level_1,
-  MAX(g2.diesel_level_percent) AS diesel_level_2,
-  fuel.level AS fuel_level,
-  r.power_source,
-  r.water_source
-FROM (
-    SELECT r1.*
-    FROM reports r1
-    INNER JOIN (
-        SELECT facility_id, MAX(id) AS max_id
-        FROM reports
-        WHERE facility_id IN ($placeholders)
-        GROUP BY facility_id
-    ) latest
-    ON r1.facility_id = latest.facility_id
-    AND r1.id = latest.max_id
-) r
-JOIN facilities f ON r.facility_id = f.id
-LEFT JOIN cistern_logs c ON c.report_id = r.id
-
-LEFT JOIN (
-    SELECT gl.report_id, gl.diesel_level_percent
-    FROM generator_logs gl
-    JOIN (
-        SELECT report_id, MIN(generator_id) AS generator_id
-        FROM generator_logs
-        GROUP BY report_id
-    ) min_gen ON gl.report_id = min_gen.report_id AND gl.generator_id = min_gen.generator_id
-) g1 ON g1.report_id = r.id
-
-LEFT JOIN (
-    SELECT gl.report_id, gl.diesel_level_percent
-    FROM generator_logs gl
-    JOIN (
-        SELECT report_id, MAX(generator_id) AS generator_id
-        FROM generator_logs
-        GROUP BY report_id
-    ) max_gen ON gl.report_id = max_gen.report_id AND gl.generator_id = max_gen.generator_id
-) g2 ON g2.report_id = r.id
-
-LEFT JOIN (
-    SELECT rep_id, MAX(id) as max_id
-    FROM fuel_reserve
-    GROUP BY rep_id
-) fr ON fr.rep_id = r.id
-LEFT JOIN fuel_reserve fuel ON fuel.id = fr.max_id
-WHERE c.water_level IS NOT NULL
-GROUP BY f.name, fuel.level, r.power_source, r.water_source
-ORDER BY f.name ASC
-";
-
-$stmt = $db->prepare($sql);
-$stmt->bind_param(str_repeat('i', count($facilities)), ...$facilities);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$facilityCharts = [];
-
-while ($row = $result->fetch_assoc()) {
-    $facilityCharts[] = [
-        'facility_id'     => $row['facility_id'],
-        'facility'        => $row['facility_name'],
-        'water_level'     => (float) $row['water_level'],
-        'diesel_1_level'  => isset($row['diesel_level_1']) ? (float) $row['diesel_level_1'] : 0,
-        'diesel_2_level'  => isset($row['diesel_level_2']) ? (float) $row['diesel_level_2'] : 0,
-        'fuel_level'      => isset($row['fuel_level']) ? (float) $row['fuel_level'] : 0,
-        'power_source'    => $row['power_source'],
-        'water_source'    => $row['water_source'],
-    ];
-}
-
-
 
 $db->close();
 ?>
@@ -363,9 +286,7 @@ margin: 0rem !important;
           <div class="padding-global">
             <div class="container-large">
               <div id="w-node-_27b25744-048c-b6db-6354-5ae213b547ae-b5f708c9" class="w-layout-grid shell-layout_component">
-                <div id="chartsContainer"></div>
-                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+                
               </div>
             </div>
           </div>
@@ -375,109 +296,7 @@ margin: 0rem !important;
   </div>
   <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=682e19ddb0ae83ddaa78f38d" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
   <script src="js/webflow.js" type="text/javascript"></script>
- <script>
-Chart.register({
-  id: 'customColoredTitle',
-  beforeDraw(chart) {
-    const {ctx, chartArea: {top, left, right}, config: {data}} = chart;
-    if (!data.meta) return;
 
-    const powerSource = data.meta.power_source;
-    const waterSource = data.meta.water_source;
-
-    // Conditional colors using if logic
-    let powerColor = '#000'; // default black
-    if (powerSource === 'AEE') powerColor = '#228B22';      // light green
-    else if (powerSource === 'Gen 1') powerColor = '#D2042D'; // light red
-    else if (powerSource === 'Gen 2') powerColor = '#D2042D'; // light red
-
-    let waterColor = '#000'; // default black
-    if (waterSource === 'AAA') waterColor = '#0096FF';      // light blue
-    else if (waterSource === 'Cistern') waterColor = '#D2042D';   // light red
-
-    ctx.save();
-    ctx.font = 'bold 15px Calibri';
-    ctx.textAlign = 'center';
-
-    
-
-    // Title line 1: Power Source
-    ctx.fillStyle = '#000';
-    ctx.fillText('Power Source -', (left + right) / 2 - 40, top - 25);
-    ctx.fillStyle = powerColor;
-    ctx.fillText(powerSource, (left + right) / 2 + 40, top - 25);
-
-    // Title line 2: Water Source
-    ctx.fillStyle = '#000';
-    ctx.fillText('Water Source -', (left + right) / 2 - 40, top - 5);
-    ctx.fillStyle = waterColor;
-    ctx.fillText(waterSource, (left + right) / 2 + 40, top - 5);
-
-    ctx.restore();
-  }
-});
-
-
-  //chart.js
-const facilityCharts = <?= json_encode($facilityCharts) ?>;
-
-facilityCharts.forEach((data, index) => {
-  const chartId = `facilityChart${index}`;
-  
-  const chartWrapper = document.createElement('div');
-  chartWrapper.className = 'chart-box';
-  chartWrapper.innerHTML = `
-    <p>${data.facility}: ${data.facility_id}</p>
-    <canvas id="${chartId}" width="400" height="300"></canvas>
-  `;
-  document.getElementById('chartsContainer').appendChild(chartWrapper);
-
-  new Chart(document.getElementById(chartId), {
-    type: 'bar',
-    data: {
-      labels: ['Water Level', 'Gen #1 Diesel', 'Gen #2 Diesel', 'Fuel Reserve'],
-      datasets: [{
-        label: `${data.facility} (%)`,
-        data: [
-          data.water_level,
-          data.diesel_1_level,
-          data.diesel_2_level,
-          data.fuel_level
-        ],
-        backgroundColor: ['#36A2EB', '#FF9F40', '#FF6384', '#4BC0C0']
-      }],
-  meta: {
-    power_source: data.power_source,
-    water_source: data.water_source
-  }
-
-    },
-    options: {
-      responsive: true,
-      layout: {
-        padding: {
-          top: 40 // make space for 2-line custom title
-        }
-      },
-      plugins: {
-        title: {
-          display: false // turn off built-in title
-        },
-            legend: {
-              display: false
-            }
-          },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100
-        }
-      }
-    }
-  });
-});
-</script>
-</script>
 
 
 </body>

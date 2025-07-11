@@ -9,7 +9,7 @@ $timeout_duration = 3000;
 if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY']) > $timeout_duration) {
     session_unset();     // Remove session variables
     session_destroy();   // Destroy session
-    header("Location: index.php?timeout=1");
+    header("Location: login.php?timeout=1");
     exit;
 }
 
@@ -17,7 +17,7 @@ $_SESSION['LAST_ACTIVITY'] = time();
 
 // Enforce login
 if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || !isset($_SESSION['facilities'])) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit;
 }
 

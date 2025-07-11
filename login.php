@@ -392,7 +392,7 @@ margin: 0rem !important;
         <div class="padding-global">
           <div class="login_component">
             <div class="login_navbar">
-              <a href="#" class="login_logo-link w-nav-brand"><img loading="lazy" src="images/Logo-500x500_Atlantis_28May20_Mesa-de-tr.png" alt=""></a>
+              <a href="#" class="login_logo-link w-nav-brand"><img loading="lazy" src="images/logo.png" alt=""></a>
             </div>
             <div class="max-width-small align-center">
               <div class="text-align-center">
@@ -415,7 +415,7 @@ margin: 0rem !important;
                 
                 <div class="spacer-small"></div>
                 <div class="text-align-center">
-                  <a href="https://relume-library-components.webflow.io/forms-sections#">Olvido su contraseña?</a>
+                  <a href="#">Olvido su contraseña?</a>
                 </div>
               </div>
             </div>

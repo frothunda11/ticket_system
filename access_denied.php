@@ -24,7 +24,7 @@ session_start();
     <div class="box">
         <h1>🚫 Access Denied</h1>
         <p>You don’t have permission to access this page.</p>
-        <p><a href="index.php">Return to Login</a></p>
+        <p><a href="login.php">Return to Login</a></p>
     </div>
 </body>
 </html>
