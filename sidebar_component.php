@@ -52,7 +52,7 @@
                             </div>
                         </div>
                         <div blocks-slot-children="ST232" blocks-name="sidebar1_accordion-list" class="sidebar1_accordion-list">
-                            <a href="#" blocks-name="sidebar1_link-8" class="sidebar1_link is-indent w-inline-block<?php echo in_array(strtolower($role), ['viewer', 'editor']) ? ' not-clickable' : ''; ?>">
+                            <a href="users.php" blocks-name="sidebar1_link-8" class="sidebar1_link is-indent w-inline-block<?php echo in_array(strtolower($role), ['viewer', 'editor']) ? ' not-clickable' : ''; ?>">
                                 <div class="sidebar1_link-wrapper">
                                     <div class="icon-embed-xsmall w-embed">
                                         <!-- View Users icon SVG -->
@@ -64,6 +64,14 @@
                                 </div>
                             </a>
                         </div>
+                        <a href="feedback.php" class="sidebar_link w-inline-block">
+                        <div class="sidebar_link-wrapper">
+                            <div class="icon-embed-xsmall w-embed">
+                                <!-- Cistern Maint icon SVG -->
+                                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--ic" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m0 14H5.17l-.59.59l-.58.58V4h16zm-9-4h2v2h-2zm0-6h2v4h-2z"></path></svg></div>
+                            <div>Feedback</div>
+                        </div>
+                    </a>
                     </div>
                 </div>
                 <div class="sidebar_menu-bottom">

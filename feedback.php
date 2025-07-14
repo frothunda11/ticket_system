@@ -39,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($email)) $mail->addReplyTo($email);
 
         $mail->isHTML(false);
-        $mail->Subject = "[AEMR Feedback] $type";
+        $mail->Subject = "[Starter Feedback] $type";
         $mail->Body =
             "Feedback Type: $type\n" .
-            "Submitted by (email): $email\n" .
-            "Submitted by (username): $username\n\n" .
+            "User Email: $email\n" .
+            "Username: $username\n\n" .
             "Description:\n$description";
 
         $mail->send();
