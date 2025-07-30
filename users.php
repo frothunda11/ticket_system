@@ -121,16 +121,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'user_mappings') {
             facilities f ON ufm.facility_id = f.id
     ";
 
-    if (!empty($username)) {
-        $query .= " WHERE ufm.username = ?";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-    } else {
-        $query .= " ORDER BY ufm.id DESC";
-        $result = $db->query($query);
-    }
+   if (!empty($username)) {
+    $query .= " WHERE ufm.username LIKE ? OR f.name LIKE ?";
+    $stmt = $db->prepare($query);
+    $like = '%' . $username . '%';
+    $stmt->bind_param("ss", $like, $like);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $query .= " ORDER BY ufm.id DESC";
+    $result = $db->query($query);
+}
 
     if ($result && $result->num_rows > 0) {
         echo '<table class="table_table">';
