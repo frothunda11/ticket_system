@@ -24,8 +24,8 @@ date_default_timezone_set('America/Puerto_Rico');
 //$db = new mysqli("localhost", "root", "", "aemr");
 $host = 'localhost';
 $database   = 'aemr';
-$user = 'aemrapp';
-$pass = '@3mrAtlant1$';
+$user = 'root';
+$pass = '';
 
 $db = new mysqli($host, $user, $pass, $database);
 
