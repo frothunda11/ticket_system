@@ -3,13 +3,81 @@ require_once 'config.php';
 require_once 'session_helper.php';
 require_once 'db_connection.php';
 
+// Prepare dropdowns (facility_options, assigned_to_options, related_ticket_options)
+$facility_options = '';
+$assigned_to_options = '';
+$related_ticket_options = '';
 
+// Fetch facilities (user-limited)
+$facility_ids = $_SESSION['facilities'] ?? [];
+if (!empty($facility_ids)) {
+    $placeholders = implode(',', array_fill(0, count($facility_ids), '?'));
+    $stmt = $db->prepare("SELECT id, name FROM facilities WHERE id IN ($placeholders) ORDER BY name");
+    $stmt->bind_param(str_repeat('s', count($facility_ids)), ...$facility_ids);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $facility_options .= '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['name']) . '</option>';
+    }
+    $stmt->close();
+}
 
+// Fetch users for assignment
+$res = $db->query("SELECT username FROM users ORDER BY username");
+while ($row = $res->fetch_assoc()) {
+    $assigned_to_options .= '<option value="' . htmlspecialchars($row['username']) . '">' . htmlspecialchars($row['username']) . '</option>';
+}
+$res->free();
 
+// Fetch tickets for related_ticket dropdown
+$res = $db->query("SELECT id, title FROM tickets ORDER BY id DESC LIMIT 50");
+while ($row = $res->fetch_assoc()) {
+    $related_ticket_options .= '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['title']) . '</option>';
+}
+$res->free();
 
+$error = '';
+$success = '';
 
+// Handle form POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title = trim($_POST['title'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $status_id = intval($_POST['status_id'] ?? 0);
+    $priority_id = intval($_POST['priority_id'] ?? 0);
+    $facility_id = trim($_POST['facility_id'] ?? '');
+    $assigned_to = trim($_POST['assigned_to'] ?? '') ?: null;
+    $related_ticket_id = trim($_POST['related_ticket'] ?? '') ?: null;
+    $created_by = $_SESSION['username'] ?? '';
 
-
+    // Validation
+    if (!$title || !$status_id || !$priority_id || !$facility_id || !$created_by) {
+        $error = 'Please fill in all required fields.';
+    } else {
+        $stmt = $db->prepare("
+            INSERT INTO tickets 
+                (title, description, status_id, priority_id, created_by, assigned_to, facility_id, related_ticket_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param(
+            "ssiiissi",
+            $title,
+            $description,
+            $status_id,
+            $priority_id,
+            $created_by,
+            $assigned_to,
+            $facility_id,
+            $related_ticket_id
+        );
+        if ($stmt->execute()) {
+            $success = "Ticket created successfully!";
+        } else {
+            $error = "Error creating ticket: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+}
 
 $db->close();
 ?>
@@ -69,7 +137,7 @@ $db->close();
                               <option value="">Choose one...</option>
                               <option value="1">Low</option>
                               <option value="2">Medium</option>
-                              <option value="3">Hight</option>
+                              <option value="3">High</option>
                               <option value="4">Urgent</option>
                               
                           </select>
@@ -77,8 +145,8 @@ $db->close();
                     </div>
                     <div class="form_2col">
                         <div class="form-field-wrapper">
-                        <label for="Facility" class="field-label">Facility</label>
-                        <select required name="facility" class="form-input">
+                        <label for="facility_id" class="field-label">Facility</label>
+                        <select required name="facility_id" class="form-input">
                             <option value="">Escoge uno...</option>
                             <?= $facility_options ?>
                         </select>
@@ -117,7 +185,9 @@ $db->close();
                       </div>
 
                     </div>
-                    <button class="button" type="submit">Save</button>
+                    <div>
+                        <button class="button" type="submit">Save</button>
+                    </div>
                   </form>
                 </div>
               </div>
