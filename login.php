@@ -69,10 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             header("Location: main.php");
                             exit;
                         } else {
-                            $error = "User is not registered in the AEMR system.";
+                            $error = "User is not registered in the system.";
                         }
                     } else {
-                        $error = "Access denied: not a member of an authorized AEMR group.";
+                        $error = "Access denied: not a member of an authorized group.";
                     }
                 } else {
                     $ldap_error = ldap_error($ldap);
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>aemr</title>
+  <title>Ticket System</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <link href="css/normalize.css" rel="stylesheet" type="text/css">
   <link href="css/webflow.css" rel="stylesheet" type="text/css">

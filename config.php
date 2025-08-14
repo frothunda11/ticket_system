@@ -21,9 +21,9 @@ date_default_timezone_set('America/Puerto_Rico');
 // -----------------------------
 // 🔐 Database connection
 // -----------------------------
-//$db = new mysqli("localhost", "root", "", "aemr");
+//$db = new mysqli("localhost", "root", "", "ticket_system");
 $host = 'localhost';
-$database   = 'aemr';
+$database   = 'ticket_system';
 $user = 'root';
 $pass = '';
 
