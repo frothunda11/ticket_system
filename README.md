@@ -1,6 +1,6 @@
-# AEMR (Asset and Emergency Management Reports)
+# Starter Template
 
-A lightweight PHP-MySQL-based internal web application for managing facility reports, water and fuel reserves, generator logs, and technician activity across multiple locations.
+Starter template to begin all internal webapps for Atlantis healthcare group
 
 ---
 
@@ -9,21 +9,15 @@ A lightweight PHP-MySQL-based internal web application for managing facility rep
 ```
 aemr_v1/
 ## user-facing Pages
-├── index.php                   # Login
+├── index.php                   # redirects to login
 ├── main.php                    # Home/Dashboard
-├── report.php                  # Submit report
-├── view-report.php             # View reports, shows latest report from each facility. Download report.
-├── cistern_maint.php           # Submit maintenance. currently disable for all users
-├── cisterns.php                # Add cisterns
-├── generators.php              # Add generators
-├── events.php                  # Add Events
-├── users.php                   # User management + mapping to facilities
+├── login.php                   # login page
+├── users.php                   # add users and map facility
 
 ## Background Pages
 ├── access_denied.php           # redirect users if the page is not authorized
 ├── config.php                  # Handles session setup, database and LDAP connections, timezone, error reporting, and role-based access control.
 ├── db_connection.php           # Connects to the MySQL database
-├── download_event_reports.php  # Handles the download of events to csv
 ├── logout.php                  # log out users
 ├── session_helper.php          # Manages session timeout, enforces user login, and optionally restricts access based on user roles.  
 ├── assets/                     # CSS/JS files
@@ -37,7 +31,7 @@ aemr_v1/
 2. Install XAMPP and start Apache/MySQL.
 3. Import sql file/database into phpMyAdmin.
 4. Configure DB credentials in `includes/db.php`.
-5. Open in browser: http://localhost/aemr_v1
+5. Open in browser: http://localhost/folder_name
 
 
 ## 🧑‍💻 User Roles & Permissions
@@ -50,13 +44,7 @@ Role access is enforced at page level (in config.php)
 
 ## 📋 Features
 
-* Report submission (weekly/event)
-* Logging cistern water levels, generator diesel levels, and working hours
 * Mapping users to specific facilities
-* Fuel reserve tracking
-* Facility status tracking (power/water source)
-* Auto-detects number of cisterns/generators
-* Chart.js visualizations of historical data
 * Role-based access control
 
 ---
