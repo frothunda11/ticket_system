@@ -42,6 +42,15 @@
                             <div>Create Ticket</div>
                         </div>
                     </a>
+                    <a href="view_tickets.php" class="sidebar_link w-inline-block">
+                        <div class="sidebar_link-wrapper">
+                            <div class="icon-embed-xsmall w-embed">
+                                <!-- Home icon SVG -->
+                                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--ph" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 256"><path fill="currentColor" d="M240 208h-16v-72l2.34 2.34A8 8 0 0 0 237.66 127l-98.35-98.32a16 16 0 0 0-22.62 0L18.34 127a8 8 0 0 0 11.32 11.31L32 136v72H16a8 8 0 0 0 0 16h224a8 8 0 0 0 0-16M48 120l80-80l80 80v88h-48v-56a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v56H48Zm96 88h-32v-48h32Z"></path></svg>
+                            </div>
+                            <div>View Tickets</div>
+                        </div>
+                    </a>
 
                     <!-- Admin Accordion -->
                     <div blocks-slot-children="ST232" blocks-name="sidebar1_accordion" class="sidebar1_accordion">

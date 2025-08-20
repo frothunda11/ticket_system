@@ -2253,6 +2253,20 @@ figcaption {
   font-size: 1rem;
   line-height: 1.6;
 }
+.form-input-small {
+  color: #000;
+  background-color: #fff;
+  border: .0625rem solid #ccc;
+  border-radius: .25rem;
+  width: 100%;
+  height: auto;
+  min-height: 2.75rem;
+  margin-bottom: 0;
+  padding: .5rem .75rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 10rem;
+}
 .form-input-textarea {
   color: #000;
   background-color: #fff;
