@@ -7,8 +7,7 @@ require_once 'db_connection.php';
 $facility_options = '';
 $assigned_to_options = '';
 $related_ticket_options = '';
-$created_by = $_SESSION['username'] ?? '';
-echo $assigned_to;
+
 // Fetch facilities (user-limited)
 $facility_ids = $_SESSION['facilities'] ?? [];
 if (!empty($facility_ids)) {
@@ -49,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $facility_id = trim($_POST['facility_id'] ?? '');
     $assigned_to = trim($_POST['assigned_to'] ?? '') ?: null;
     $related_ticket_id = trim($_POST['related_ticket'] ?? '') ?: null;
-    $created_by = $_SESSION['username'] ?? '';
+    //$created_by = trim($_SESSION['username'] ?? '');
+    $created_by = "shilario";
 
     // Validation
     if (!$title || !$status_id || !$priority_id || !$facility_id || !$created_by) {
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->bind_param(
-            "ssiiissi",
+            "ssiissii",
             $title,
             $description,
             $status_id,
@@ -179,13 +179,10 @@ $db->close();
                           </select>
                         </div>
                     </div>
-                    <div class="form_2col">
                       <div class="form-field-wrapper">
                         <label for="description" class="field-label">Description</label>
-                        <textarea class="form-input-textarea" name="description" type="text"></textarea>
+                        <textarea class="form-input-textarea" rows="3" name="description" type="text"></textarea>
                       </div>
-
-                    </div>
                     <div>
                         <button class="button" type="submit">Save</button>
                     </div>
