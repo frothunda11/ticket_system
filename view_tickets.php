@@ -6,37 +6,44 @@ require_once 'db_connection.php';
 $username = $_SESSION['username'];
 $facilities = $_SESSION['facilities'] ?? [];
 
-$whereClauses = [
-    "t.created_by = ?",
-    "t.facility_id IN ($placeholders)"
-];
+// HTMX search/sort inputs
+$search = trim($_GET['search'] ?? '');
+$sort = ($_GET['sort'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 
-$params = [$username];
-$types = 's' . str_repeat('s', count($facilities));
-$params = array_merge($params, $facilities);
+$tickets = [];
 
-if ($search) {
-    $whereClauses[] = "(t.title LIKE ? OR t.description LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $types .= 'ss';
-}
+// Defensive: only run query if there are facilities
+if (!empty($facilities)) {
+    $placeholders = implode(',', array_fill(0, count($facilities), '?'));
+    $whereClauses = [
+        "t.created_by = ?",
+        "t.facility_id IN ($placeholders)"
+    ];
+    $params = [$username];
+    $types = 's' . str_repeat('s', count($facilities));
+    $params = array_merge($params, $facilities);
 
-$where = implode(' AND ', $whereClauses);
+    if ($search) {
+        $whereClauses[] = "(t.title LIKE ? OR t.description LIKE ?)";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $types .= 'ss';
+    }
+    $where = implode(' AND ', $whereClauses);
 
-$sql = "SELECT t.id, t.title, t.description, 
-               ts.name AS status_name, 
-               tp.name AS priority_name, 
-               t.facility_id, f.name AS facility_name, t.created_at
-        FROM tickets t
-        JOIN facilities f ON t.facility_id = f.id
-        JOIN ticket_statuses ts ON t.status_id = ts.id
-        JOIN ticket_priorities tp ON t.priority_id = tp.id
-        WHERE $where
-        ORDER BY t.created_at $sort";
+    $sql = "SELECT t.id, t.title, t.description, 
+                   ts.name AS status_name, 
+                   tp.name AS priority_name, 
+                   t.facility_id, f.name AS facility_name, t.created_at
+            FROM tickets t
+            JOIN facilities f ON t.facility_id = f.id
+            JOIN ticket_statuses ts ON t.status_id = ts.id
+            JOIN ticket_priorities tp ON t.priority_id = tp.id
+            WHERE $where
+            ORDER BY t.created_at $sort";
 
-$stmt = $db->prepare($sql);
-$stmt->bind_param($types, ...$params);
+    $stmt = $db->prepare($sql);
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -45,8 +52,7 @@ $stmt->bind_param($types, ...$params);
     }
 
     $stmt->close();
-
-$is_htmx = isset($_SERVER['HTTP_HX_REQUEST']);
+}
 
 $db->close();
 
