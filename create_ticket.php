@@ -7,7 +7,8 @@ require_once 'db_connection.php';
 $facility_options = '';
 $assigned_to_options = '';
 $related_ticket_options = '';
-
+$created_by = $_SESSION['username'] ?? '';
+echo $assigned_to;
 // Fetch facilities (user-limited)
 $facility_ids = $_SESSION['facilities'] ?? [];
 if (!empty($facility_ids)) {
