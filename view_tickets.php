@@ -6,24 +6,37 @@ require_once 'db_connection.php';
 $username = $_SESSION['username'];
 $facilities = $_SESSION['facilities'] ?? [];
 
-// Prepare SQL and fetch tickets
-$tickets = [];
-if (!empty($facilities)) {
-    $placeholders = implode(',', array_fill(0, count($facilities), '?'));
-    $sql = "SELECT t.id, t.title, t.description, 
-                   ts.name AS status_name, 
-                   tp.name AS priority_name, 
-                   t.facility_id, f.name AS facility_name, t.created_at
-            FROM tickets t
-            JOIN facilities f ON t.facility_id = f.id
-            JOIN ticket_statuses ts ON t.status_id = ts.id
-            JOIN ticket_priorities tp ON t.priority_id = tp.id
-            WHERE t.created_by = ? AND t.facility_id IN ($placeholders)
-            ORDER BY t.created_at DESC";
+$whereClauses = [
+    "t.created_by = ?",
+    "t.facility_id IN ($placeholders)"
+];
 
-    $stmt = $db->prepare($sql);
-    $types = str_repeat('s', count($facilities));
-    $stmt->bind_param('s' . $types, $username, ...$facilities);
+$params = [$username];
+$types = 's' . str_repeat('s', count($facilities));
+$params = array_merge($params, $facilities);
+
+if ($search) {
+    $whereClauses[] = "(t.title LIKE ? OR t.description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $types .= 'ss';
+}
+
+$where = implode(' AND ', $whereClauses);
+
+$sql = "SELECT t.id, t.title, t.description, 
+               ts.name AS status_name, 
+               tp.name AS priority_name, 
+               t.facility_id, f.name AS facility_name, t.created_at
+        FROM tickets t
+        JOIN facilities f ON t.facility_id = f.id
+        JOIN ticket_statuses ts ON t.status_id = ts.id
+        JOIN ticket_priorities tp ON t.priority_id = tp.id
+        WHERE $where
+        ORDER BY t.created_at $sort";
+
+$stmt = $db->prepare($sql);
+$stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -32,7 +45,8 @@ if (!empty($facilities)) {
     }
 
     $stmt->close();
-}
+
+$is_htmx = isset($_SERVER['HTTP_HX_REQUEST']);
 
 $db->close();
 
@@ -51,6 +65,7 @@ $db->close();
   <script type="text/javascript">!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);</script>
   <link href="images/favicon.png" rel="shortcut icon" type="image/x-icon">
   <link href="images/webclip.png" rel="apple-touch-icon"><!--  Keep this css code to improve the font quality -->
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
   <style>
   * {
   -webkit-font-smoothing: antialiased;
@@ -80,13 +95,22 @@ $db->close();
         <div class="section_shell-layout">
           <div class="padding-global">
             <div class="container-large">
-                <div class="button-group">
-                    <select required id="event" name="event" class="form-input-small">
-                        <option value="">Des</option>
-                        <option value="">Asc</option>            
-                    </select>
-                    <input type="text" placeholder="search..." class="form-input-small">
-                </div>
+                <div class="button-group" style="display: flex; gap: 8px;">
+                <select required id="ticket-sort" name="sort" class="form-input-small"
+                    hx-get="view_tickets.php"
+                    hx-target="#tickets-table-body"
+                    hx-trigger="change"
+                    hx-params="sort,search">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>            
+                </select>
+                <input type="text" name="search" id="ticket-search" placeholder="search..." class="form-input-small"
+                    hx-get="view_tickets.php"
+                    hx-target="#tickets-table-body"
+                    hx-trigger="keyup changed delay:300ms"
+                    hx-params="sort,search"
+                >
+            </div>
                 <div class="spacer-small"> </div>
 
                 <table class="table_table">
@@ -101,7 +125,7 @@ $db->close();
                       <th class="table_header">Description</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="tickets-table-body">
                     <?php foreach ($tickets as $t): ?>
                       <tr class="table_row">
                         <td class="table_cell"><?= htmlspecialchars($t['id']) ?></td>
