@@ -6,13 +6,14 @@ require_once 'db_connection.php';
 $username = $_SESSION['username'];
 $facilities = $_SESSION['facilities'] ?? [];
 
-// HTMX search/sort inputs
+// HTMX search input
 $search = trim($_GET['search'] ?? '');
-$sort = ($_GET['sort'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+
+// Always sort descending
+$sort = 'DESC';
 
 $tickets = [];
 
-// Defensive: only run query if there are facilities
 if (!empty($facilities)) {
     $placeholders = implode(',', array_fill(0, count($facilities), '?'));
     $whereClauses = [
@@ -54,7 +55,28 @@ if (!empty($facilities)) {
     $stmt->close();
 }
 
-$db->close();
+// HTMX partial response (table body only)
+$is_htmx = isset($_SERVER['HTTP_HX_REQUEST']);
+if ($is_htmx) {
+    ob_clean(); // Optional, remove previous output
+    ?>
+    <?php foreach ($tickets as $t): ?>
+      <tr class="table_row">
+        <td class="table_cell"><?= htmlspecialchars($t['id']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['title']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['facility_name']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['status_name']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['priority_name']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['created_at']) ?></td>
+        <td class="table_cell"><?= htmlspecialchars($t['description']) ?></td>
+      </tr>
+    <?php endforeach; ?>
+    <?php if (empty($tickets)): ?>
+      <tr><td colspan="7">No tickets found.</td></tr>
+    <?php endif; ?>
+    <?php
+    exit;
+}
 
 ?>
 
@@ -102,14 +124,6 @@ $db->close();
           <div class="padding-global">
             <div class="container-large">
                 <div class="button-group" style="display: flex; gap: 8px;">
-                <select required id="ticket-sort" name="sort" class="form-input-small"
-                    hx-get="view_tickets.php"
-                    hx-target="#tickets-table-body"
-                    hx-trigger="change"
-                    hx-params="sort,search">
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>            
-                </select>
                 <input type="text" name="search" id="ticket-search" placeholder="search..." class="form-input-small"
                     hx-get="view_tickets.php"
                     hx-target="#tickets-table-body"
