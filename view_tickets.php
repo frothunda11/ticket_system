@@ -68,7 +68,9 @@ $is_htmx = isset($_SERVER['HTTP_HX_REQUEST']);
 if ($is_htmx) {
     foreach ($tickets as $t) {
         echo "<tr class='table_row'>
-            <td class='table_cell'>" . htmlspecialchars($t['id']) . "</td>
+            <td class='table_cell'>
+              <a href='ticket_detail.php?id=" . htmlspecialchars($t['id']) . "' style='color: #0074d9; text-decoration: underline;'>" . htmlspecialchars($t['id']) . "</a>
+            </td>
             <td class='table_cell'>" . htmlspecialchars($t['title']) . "</td>
             <td class='table_cell'>" . htmlspecialchars($t['facility_name']) . "</td>
             <td class='table_cell'>" . htmlspecialchars($t['status_name']) . "</td>
