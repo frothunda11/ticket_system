@@ -6,14 +6,13 @@ require_once 'db_connection.php';
 $username = $_SESSION['username'];
 $facilities = $_SESSION['facilities'] ?? [];
 
-// HTMX search input
+// HTMX search/sort inputs
 $search = trim($_GET['search'] ?? '');
 
-// Always sort descending
-$sort = 'DESC';
 
 $tickets = [];
 
+// Defensive: only run query if there are facilities
 if (!empty($facilities)) {
     $placeholders = implode(',', array_fill(0, count($facilities), '?'));
     $whereClauses = [
@@ -25,11 +24,18 @@ if (!empty($facilities)) {
     $params = array_merge($params, $facilities);
 
     if ($search) {
-        $whereClauses[] = "(t.title LIKE ? OR t.description LIKE ?)";
-        $params[] = "%$search%";
-        $params[] = "%$search%";
-        $types .= 'ss';
-    }
+    $whereClauses[] = "(
+        t.id LIKE ? OR
+        t.title LIKE ? OR
+        t.description LIKE ? OR
+        f.name LIKE ? OR
+        ts.name LIKE ? OR
+        tp.name LIKE ? OR
+        t.created_at LIKE ?
+    )";
+    $params = array_merge($params, array_fill(0, 7, "%$search%"));
+    $types .= str_repeat('s', 7);
+}
     $where = implode(' AND ', $whereClauses);
 
     $sql = "SELECT t.id, t.title, t.description, 
@@ -41,7 +47,7 @@ if (!empty($facilities)) {
             JOIN ticket_statuses ts ON t.status_id = ts.id
             JOIN ticket_priorities tp ON t.priority_id = tp.id
             WHERE $where
-            ORDER BY t.created_at $sort";
+            ORDER BY t.created_at DESC";
 
     $stmt = $db->prepare($sql);
     $stmt->bind_param($types, ...$params);
@@ -55,26 +61,25 @@ if (!empty($facilities)) {
     $stmt->close();
 }
 
+$db->close();
+
 // HTMX partial response (table body only)
 $is_htmx = isset($_SERVER['HTTP_HX_REQUEST']);
 if ($is_htmx) {
-    ob_clean(); // Optional, remove previous output
-    ?>
-    <?php foreach ($tickets as $t): ?>
-      <tr class="table_row">
-        <td class="table_cell"><?= htmlspecialchars($t['id']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['title']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['facility_name']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['status_name']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['priority_name']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['created_at']) ?></td>
-        <td class="table_cell"><?= htmlspecialchars($t['description']) ?></td>
-      </tr>
-    <?php endforeach; ?>
-    <?php if (empty($tickets)): ?>
-      <tr><td colspan="7">No tickets found.</td></tr>
-    <?php endif; ?>
-    <?php
+    foreach ($tickets as $t) {
+        echo "<tr class='table_row'>
+            <td class='table_cell'>" . htmlspecialchars($t['id']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['title']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['facility_name']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['status_name']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['priority_name']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['created_at']) . "</td>
+            <td class='table_cell'>" . htmlspecialchars($t['description']) . "</td>
+        </tr>";
+    }
+    if (empty($tickets)) {
+        echo "<tr><td colspan='7'></td></tr>";
+    }
     exit;
 }
 
@@ -148,7 +153,11 @@ if ($is_htmx) {
                   <tbody id="tickets-table-body">
                     <?php foreach ($tickets as $t): ?>
                       <tr class="table_row">
-                        <td class="table_cell"><?= htmlspecialchars($t['id']) ?></td>
+                        <td class="table_cell">
+                          <a href="ticket_detail.php?id=<?= htmlspecialchars($t['id']) ?>" style="color: #0074d9; text-decoration: underline;">
+                            <?= htmlspecialchars($t['id']) ?>
+                          </a>
+                        </td>
                         <td class="table_cell"><?= htmlspecialchars($t['title']) ?></td>
                         <td class="table_cell"><?= htmlspecialchars($t['facility_name']) ?></td>
                         <td class="table_cell"><?= htmlspecialchars($t['status_name']) ?></td>
