@@ -5004,7 +5004,6 @@ canvas {
     grid-column-gap: .25rem;
     grid-row-gap: .25rem;
     font-size: .875rem;
-    display: flex;
     align-items: center;
 }
 
@@ -5083,7 +5082,10 @@ canvas {
 .select-small:hover {
   border-color: #0074d9;
 }
-
+.back-text-link{
+  color:#164294;
+  text-decoration: underline;
+}
 @media screen and (max-width: 767px) {
   .ticket_info {
     max-width: none;

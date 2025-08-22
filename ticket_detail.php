@@ -170,6 +170,7 @@ $db->close();
                     <?= !empty($success) ? htmlspecialchars($success) : htmlspecialchars($error) ?>
                   </div>
                   <?php endif; ?>
+                  <a href="view_tickets.php" class="back-text-link">Back</a>
               </div>
             </div>
           </div>
@@ -234,7 +235,7 @@ $db->close();
                             <div class="text-color-light-grey"><?= htmlspecialchars($ticket['updated_at'] ?? '') ?></div>
                         </div>
                       </div>
-                      <div class="button-group align-center">
+                      <div class="button-group">
                         <button type="submit" name="update_ticket" class="button is-xsmall w-button">Save</button>
                       </div>
                   </div>
