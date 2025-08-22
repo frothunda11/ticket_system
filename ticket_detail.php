@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'session_helper.php';
+require_once 'db_connection.php';
 
 $ticket_id = intval($_GET['id'] ?? 0);
 $ticket = null;
@@ -22,6 +23,39 @@ $result = $stmt->get_result();
 $ticket = $result->fetch_assoc();
 $stmt->close();
 }
+
+//comment submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
+    $comment_text = trim($_POST['comment']);
+    $user_id = $_SESSION['username'];
+    if (!empty($comment_text) && $ticket_id > 0 && !empty($user_id)) {
+        // Open new DB connection
+        $db = new mysqli('localhost', 'root', '', 'ticket_system');
+        if ($db->connect_error) die("DB error: " . $db->connect_error);
+
+        $stmt = $db->prepare("INSERT INTO ticket_comments (ticket_id, user_id, comment) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $ticket_id, $user_id, $comment_text);
+        $stmt->execute();
+        $stmt->close();
+        $db->close();
+        // Optionally: redirect to clear POST and avoid resubmission
+        header("Location: ticket_detail.php?id=$ticket_id");
+        exit;
+    }
+}
+
+// Fetch comments for the ticket
+$comments = [];
+
+$stmt = $db->prepare("SELECT user_id, comment, created_at FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at DESC");
+$stmt->bind_param("i", $ticket_id);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $comments[] = $row;
+}
+$stmt->close();
+
 
 $db->close();
 
@@ -72,71 +106,69 @@ $db->close();
               <div class="ticket_component">
                 <div class="ticket_info">
                     <div class="ticket_heading-row">
-                      <div class="text-weight-semibold">Issue with internet</div>
-                      <div class="text-size-small">I am unable to connect to the internet</div>
+                      <div class="text-weight-semibold"><?= htmlspecialchars($ticket['title'] ?? '') ?></div>
+                      <div class="text-size-small"><?= htmlspecialchars($ticket['description'] ?? '') ?></div>
                     </div>
                     <div class="ticket_info-wrap">
                       <div class="ticket_info-row">
                           <div>Status:</div>
-                          <div><?= htmlspecialchars($ticket['status_name'] ?? $ticket['status_id']) ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['status_name'] ?? $ticket['status_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Priority:</div>
-                          <div><?= htmlspecialchars($ticket['priority_name'] ?? $ticket['priority_id']) ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['priority_name'] ?? $ticket['priority_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Created by:</div>
-                          <div><?= htmlspecialchars($ticket['created_by'] ?? '') ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['created_by'] ?? '') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Assigned to:</div>
-                          <div><?= htmlspecialchars($ticket['assigned_to'] ?? 'None') ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['assigned_to'] ?? 'None') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Facility:</div>
-                          <div><?= htmlspecialchars($ticket['facility_name'] ?? $ticket['facility_id']) ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['facility_name'] ?? $ticket['facility_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Related Ticket:</div>
-                          <div>#<?= htmlspecialchars($ticket['related_ticket_id'] ?? 'None') ?></div>
+                          <div class="text-color-light-grey">#<?= htmlspecialchars($ticket['related_ticket_id'] ?? 'None') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Created At:</div>
-                          <div><?= htmlspecialchars($ticket['created_at'] ?? '') ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['created_at'] ?? '') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Updated At:</div>
-                          <div><?= htmlspecialchars($ticket['updated_at'] ?? '') ?></div>
+                          <div class="text-color-light-grey"><?= htmlspecialchars($ticket['updated_at'] ?? '') ?></div>
                       </div>
                     </div>
-                    <div class="button-group align-center"><a href="#" class="button is-xsmall w-button">Update/Save</a></div>
+                    <div class="button-group align-center"><a href="#" class="button is-xsmall w-button">Save</a></div>
                 </div>
                 <div class="ticket_comments">
                     <div>
-                      <form name="message" method="post">
-                        <label for="email">Comment</label>
-                        <textarea placeholder="Type Message" maxlength="5000" name="message" ></textarea>
+                      <form name="comment_form" method="post" class="comment-form">
+                        <label for="comment">Comment</label>
+                        <textarea placeholder="Type Message" maxlength="5000" name="comment" class="comment-textarea"></textarea>
                         <input type="submit" class="button is-xsmall" value="Submit"></form>
                     </div>
                     <div class="ticket_comment-wrap">
-                      <div>Ticket comments</div>
-                      <div class="ticket_comment-row-wrap">
-                          <div class="ticket_comment-row">
-                            <div class="ticket_comment-row-heading">
-                                <div>[shilario]</div>
-                                <div>[08/23/2025, 4:30 PM]</div>
-                            </div>
-                            <p class="ticket_comment-text">[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.]</p>
+                    <div>Ticket comments</div>
+                    <div class="ticket_comment-row-wrap">
+                      <?php foreach ($comments as $c): ?>
+                        <div class="ticket_comment-row">
+                          <div class="ticket_comment-row-heading">
+                            <div class="ticket_username"><?= htmlspecialchars($c['user_id']) ?></div>
+                            <div><?= htmlspecialchars(date("m/d/Y, h:i A", strtotime($c['created_at']))) ?></div>
                           </div>
-                          <div class="ticket_comment-row">
-                            <div class="ticket_comment-row-heading">
-                                <div>[jloredo]</div>
-                                <div>[08/23/2025, 3:33 PM]</div>
-                            </div>
-                            <p class="ticket_comment-text">[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.]</p>
-                          </div>
-                      </div>
+                          <p class="ticket_comment-text"><?= nl2br(htmlspecialchars($c['comment'])) ?></p>
+                        </div>
+                      <?php endforeach; ?>
+                      <?php if (empty($comments)): ?>
+                        <div>No comments yet.</div>
+                      <?php endif; ?>
                     </div>
+                  </div>
                 </div>
               </div>
             </div>
