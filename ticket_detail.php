@@ -7,15 +7,20 @@ $ticket = null;
 
 if ($ticket_id > 0) {
     $stmt = $db->prepare("
-        SELECT id, description, status_id, priority_id, created_by, assigned_to, facility_id, related_ticket_id, created_at, updated_at
-        FROM tickets
-        WHERE id = ?
-    ");
-    $stmt->bind_param("i", $ticket_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $ticket = $result->fetch_assoc();
-    $stmt->close();
+    SELECT t.id, t.title, t.description, t.status_id, ts.name AS status_name, 
+           t.priority_id, tp.name AS priority_name, t.created_by, t.assigned_to, 
+           t.facility_id, f.name AS facility_name, t.related_ticket_id, t.created_at, t.updated_at
+    FROM tickets t
+    JOIN facilities f ON t.facility_id = f.id
+    JOIN ticket_statuses ts ON t.status_id = ts.id
+    JOIN ticket_priorities tp ON t.priority_id = tp.id
+    WHERE t.id = ?
+");
+$stmt->bind_param("i", $ticket_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$ticket = $result->fetch_assoc();
+$stmt->close();
 }
 
 $db->close();
@@ -64,22 +69,6 @@ $db->close();
         <div class="section_shell-layout">
           <div class="padding-global">
             <div class="container-large">
-              <?php if ($ticket): ?>
-                <div class="ticket-detail"><span class="ticket-label">Description:</span> <span class="ticket-value"><?= nl2br(htmlspecialchars($ticket['description'])) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Status ID:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['status_id']) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Priority ID:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['priority_id']) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Created By:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['created_by']) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Assigned To:<span class="ticket-value"><?= htmlspecialchars($ticket['assigned_to'] ?? 'None') ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Facility ID:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['facility_id']) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Related Ticket ID:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['related_ticket_id'] ?? 'None') ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Created At:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['created_at']) ?></span></div>
-                <div class="ticket-detail"><span class="ticket-label">Updated At:</span> <span class="ticket-value"><?= htmlspecialchars($ticket['updated_at']) ?></span></div>
-                <div class="spacer-small"></div>
-                <a href="view_tickets.php" class="button">Back to Tickets</a>
-              <?php else: ?>
-                <p>Ticket not found.</p>
-              <?php endif; ?>
-
               <div class="ticket_component">
                 <div class="ticket_info">
                     <div class="ticket_heading-row">
@@ -89,44 +78,44 @@ $db->close();
                     <div class="ticket_info-wrap">
                       <div class="ticket_info-row">
                           <div>Status:</div>
-                          <div>[Open]</div>
+                          <div><?= htmlspecialchars($ticket['status_name'] ?? $ticket['status_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Priority:</div>
-                          <div>[Urgent]</div>
+                          <div><?= htmlspecialchars($ticket['priority_name'] ?? $ticket['priority_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Created by:</div>
-                          <div>[shilario]</div>
+                          <div><?= htmlspecialchars($ticket['created_by'] ?? '') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Assigned to:</div>
-                          <div>[jloredo]</div>
+                          <div><?= htmlspecialchars($ticket['assigned_to'] ?? 'None') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Facility:</div>
-                          <div>[Mayaguez]</div>
+                          <div><?= htmlspecialchars($ticket['facility_name'] ?? $ticket['facility_id']) ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Related Ticket:</div>
-                          <div>[#14]</div>
+                          <div>#<?= htmlspecialchars($ticket['related_ticket_id'] ?? 'None') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Created At:</div>
-                          <div>[08/21/2025]</div>
+                          <div><?= htmlspecialchars($ticket['created_at'] ?? '') ?></div>
                       </div>
                       <div class="ticket_info-row">
                           <div>Updated At:</div>
-                          <div>[08/22/2025]</div>
+                          <div><?= htmlspecialchars($ticket['updated_at'] ?? '') ?></div>
                       </div>
                     </div>
                     <div class="button-group align-center"><a href="#" class="button is-xsmall w-button">Update/Save</a></div>
                 </div>
                 <div class="ticket_comments">
                     <div>
-                      <form id="email-form" name="email-form" data-name="Email Form" method="get" aria-label="Email Form">
+                      <form name="message" method="post">
                         <label for="email">Comment</label>
-                        <textarea placeholder="Example Text" maxlength="5000" id="field" name="field" data-name="Field" class="w-input"></textarea>
+                        <textarea placeholder="Type Message" maxlength="5000" name="message" ></textarea>
                         <input type="submit" class="button is-xsmall" value="Submit"></form>
                     </div>
                     <div class="ticket_comment-wrap">
@@ -134,17 +123,17 @@ $db->close();
                       <div class="ticket_comment-row-wrap">
                           <div class="ticket_comment-row">
                             <div class="ticket_comment-row-heading">
-                                <div>shilario</div>
-                                <div>08/23/2025, 4:30 PM</div>
+                                <div>[shilario]</div>
+                                <div>[08/23/2025, 4:30 PM]</div>
                             </div>
-                            <p class="ticket_comment-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.</p>
+                            <p class="ticket_comment-text">[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.]</p>
                           </div>
                           <div class="ticket_comment-row">
                             <div class="ticket_comment-row-heading">
-                                <div>jloredo</div>
-                                <div>08/23/2025, 3:33 PM</div>
+                                <div>[jloredo]</div>
+                                <div>[08/23/2025, 3:33 PM]</div>
                             </div>
-                            <p class="ticket_comment-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.</p>
+                            <p class="ticket_comment-text">[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.]</p>
                           </div>
                       </div>
                     </div>
