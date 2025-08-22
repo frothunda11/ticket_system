@@ -5005,6 +5005,7 @@ canvas {
     grid-row-gap: .25rem;
     font-size: .875rem;
     display: flex;
+    align-items: center;
 }
 
 .ticket_comment-row-wrap {
@@ -5061,6 +5062,28 @@ canvas {
   padding:0.5rem 1.25rem;
   font-size: 0.875rem;
 }
+
+.select-small {
+  padding: 4px 22px 4px 8px;
+  border-radius: 5px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  background: #fff url('/ticket_system/images/select-arrow.svg') no-repeat right 5px center; 
+  background-size: 20px 20px;
+  appearance: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.select-small:focus {
+  border-color: #0074d9;
+  outline: none;
+}
+
+.select-small:hover {
+  border-color: #0074d9;
+}
+
 @media screen and (max-width: 767px) {
   .ticket_info {
     max-width: none;
