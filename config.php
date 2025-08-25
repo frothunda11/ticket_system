@@ -66,9 +66,9 @@ if (in_array($current_page, $public_pages)) {
 
 // List of allowed pages per role
 $role_permissions = [
-    'admin' => ['main', 'login','dashboard','feedback','users','create_ticket', 'view_tickets','ticket_detail'],
-    'editor' => ['main', 'login','dashboard', 'feedback','create_ticket', 'view_tickets','ticket_detail'],
-    'viewer' => ['main', 'login', 'feedback','create_ticket', 'view_tickets','ticket_detail'],
+    'admin' => ['main', 'login','dashboard','feedback','users','create_ticket', 'view_tickets','ticket_detail', 'download_attachment'],
+    'editor' => ['main', 'login','dashboard', 'feedback','create_ticket', 'view_tickets','ticket_detail', 'download_attachment'],
+    'viewer' => ['main', 'login', 'feedback','create_ticket', 'view_tickets','ticket_detail', 'download_attachment'],
 ];
 
 // Get the user's role

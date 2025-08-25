@@ -48,90 +48,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $facility_id = trim($_POST['facility_id'] ?? '');
     $assigned_to = trim($_POST['assigned_to'] ?? '') ?: null;
     $related_ticket_id = trim($_POST['related_ticket'] ?? '') ?: null;
-    //$created_by = trim($_SESSION['username'] ?? '');
     $created_by = "shilario";
 
     // Validation
     if (!$title || !$status_id || !$priority_id || !$facility_id || !$created_by) {
-        $error = 'Please fill in all required fields.';
-    } else {
-        $stmt = $db->prepare("
-            INSERT INTO tickets 
-                (title, description, status_id, priority_id, created_by, assigned_to, facility_id, related_ticket_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->bind_param(
-            "ssiissii",
-            $title,
-            $description,
-            $status_id,
-            $priority_id,
-            $created_by,
-            $assigned_to,
-            $facility_id,
-            $related_ticket_id
-        );
-        if ($stmt->execute()) {
-          $success = "Ticket created successfully!";
-          $ticket_id = $stmt->insert_id;
+    $error = 'Please fill in all required fields.';
+} else {
+    $stmt = $db->prepare("
+        INSERT INTO tickets 
+            (title, description, status_id, priority_id, created_by, assigned_to, facility_id, related_ticket_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->bind_param(
+        "ssiissii",
+        $title,
+        $description,
+        $status_id,
+        $priority_id,
+        $created_by,
+        $assigned_to,
+        $facility_id,
+        $related_ticket_id
+    );
+    if ($stmt->execute()) {
+        $success = "Ticket created successfully!";
+        $ticket_id = $stmt->insert_id;
 
         // Handle file upload if present
-            if (!empty($_FILES['attachment']['name'])) {
-            $upload_dir = 'uploads/';
+        if (!empty($_FILES['attachment']['name'])) {
             $filename = basename($_FILES['attachment']['name']);
-            $target_file = $upload_dir . uniqid() . '_' . $filename;
+            $fileData = file_get_contents($_FILES['attachment']['tmp_name']);
+            $uploaded_by = $_SESSION['username'] ?? $created_by;
 
-            if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_file)) {
-                // Save to ticket_attachments table
-                $uploaded_by = $_SESSION['username'] ?? $created_by;
-                $stmt_attach = $db->prepare("
-                    INSERT INTO ticket_attachments (ticket_id, file_path, comment_id, uploaded_by)
-                    VALUES (?, ?, NULL, ?)
-                ");
-                $stmt_attach->bind_param("iss", $ticket_id, $target_file, $uploaded_by);
-                $stmt_attach->execute();
-                $stmt_attach->close();
-            } else {
+            $stmt_attach = $db->prepare("
+                INSERT INTO ticket_attachments (ticket_id, file_data, file_name, comment_id, uploaded_by)
+                VALUES (?, ?, ?, NULL, ?)
+            ");
+            $null = NULL; // placeholder for file_data (b param)
+            $stmt_attach->bind_param("ibss", $ticket_id, $null, $filename, $uploaded_by);
+            $stmt_attach->send_long_data(1, $fileData); // index 1 is the second param (file_data)
+            if (!$stmt_attach->execute()) {
                 $error .= " File upload failed.";
             }
+            $stmt_attach->close();
         }
     } else {
-            $error = "Error creating ticket: " . $stmt->error;
-        }
-        $stmt->close();
+        $error = "Error creating ticket: " . $stmt->error;
     }
+    $stmt->close();
+}
 }
 
-//upload file/image
-if ($stmt->execute()) {
-    $success = "Ticket created successfully!";
-
-    // Get the ID of the newly created ticket
-    $ticket_id = $stmt->insert_id;
-
-    // Handle file upload if present
-    if (!empty($_FILES['attachment']['name'])) {
-        $upload_dir = 'uploads/';
-        $filename = basename($_FILES['attachment']['name']);
-        $target_file = $upload_dir . uniqid() . '_' . $filename;
-
-        if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_file)) {
-            // Save to ticket_attachments table
-            $uploaded_by = $_SESSION['username'] ?? $created_by;
-            $stmt_attach = $db->prepare("
-                INSERT INTO ticket_attachments (ticket_id, file_path, comment_id, uploaded_by)
-                VALUES (?, ?, NULL, ?)
-            ");
-            $stmt_attach->bind_param("iss", $ticket_id, $target_file, $uploaded_by);
-            $stmt_attach->execute();
-            $stmt_attach->close();
-        } else {
-            $error .= " File upload failed.";
-        }
-    }
-} else {
-    $error = "Error creating ticket: " . $stmt->error;
-}
 
 $db->close();
 ?>

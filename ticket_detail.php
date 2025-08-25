@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
     $comment_text = trim($_POST['comment']);
     $user_id = $_SESSION['username'];
     if (!empty($comment_text) && $ticket_id > 0 && !empty($user_id)) {
-        // Open new DB connection
         $db = new mysqli('localhost', 'root', '', 'ticket_system');
         if ($db->connect_error) {
             $error = "DB error: " . $db->connect_error;
@@ -43,7 +42,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
             $stmt = $db->prepare("INSERT INTO ticket_comments (ticket_id, user_id, comment) VALUES (?, ?, ?)");
             $stmt->bind_param("iss", $ticket_id, $user_id, $comment_text);
             if ($stmt->execute()) {
+                $comment_id = $stmt->insert_id;
                 $success = "Comment added successfully!";
+
+                // Handle file upload for comment
+                if (!empty($_FILES['comment_attachment']['name'])) {
+                    $upload_dir = 'uploads/';
+                    $filename = basename($_FILES['comment_attachment']['name']);
+                    $target_file = $upload_dir . uniqid() . '_' . $filename;
+
+                    if (move_uploaded_file($_FILES['comment_attachment']['tmp_name'], $target_file)) {
+                        $stmt_attach = $db->prepare("
+                            INSERT INTO ticket_attachments (ticket_id, file_path, comment_id, uploaded_by)
+                            VALUES (?, ?, ?, ?)
+                        ");
+                        $stmt_attach->bind_param("isis", $ticket_id, $target_file, $comment_id, $user_id);
+                        $stmt_attach->execute();
+                        $stmt_attach->close();
+                    } else {
+                        $error .= " File upload failed.";
+                    }
+                }
             } else {
                 $error = "Failed to add comment: " . $stmt->error;
             }
@@ -127,6 +146,18 @@ if ($ticket_id > 0) {
     $ticket = $result->fetch_assoc();
     $stmt->close();
 }
+
+
+// Fetch ticket-level attachment 
+$attachment = null;
+$stmt = $db->prepare("SELECT id, file_name FROM ticket_attachments WHERE ticket_id = ? AND comment_id IS NULL LIMIT 1");
+$stmt->bind_param("i", $ticket_id);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($row = $res->fetch_assoc()) {
+    $attachment = $row;
+}
+$stmt->close();
 
 $db->close();
 
@@ -234,18 +265,34 @@ $db->close();
                             <div>Updated At:</div>
                             <div class="text-color-light-grey"><?= htmlspecialchars($ticket['updated_at'] ?? '') ?></div>
                         </div>
+                        <?php if ($attachment): ?>
+                          <div class="ticket_info-row">
+                            <div>Attachment:</div>
+                            <div>
+                              <a href="download_attachment.php?id=<?= $attachment['id'] ?>" target="_blank">
+                                <?= htmlspecialchars($attachment['file_name']) ?>
+                              </a>
+                            </div>
+                          </div>
+                        <?php endif; ?>
+                        
                       </div>
                       <div class="button-group">
                         <button type="submit" name="update_ticket" class="button is-xsmall w-button">Save</button>
                       </div>
+                      
                   </div>
                 </form>
                 <div class="ticket_comments">
                     <div>
-                      <form name="comment_form" method="post" class="comment-form">
+                      <form name="comment_form" method="post" enctype="multipart/form-data" class="comment-form">
                         <label for="comment">Comment</label>
                         <textarea placeholder="Type Message" maxlength="5000" name="comment" class="comment-textarea"></textarea>
-                        <input type="submit" class="button is-xsmall" value="Submit"></form>
+                        <div class="button-group">
+                          <input type="file" name="comment_attachment" class="form-input-file" accept="image/*,.pdf">
+                          <input type="submit" class="button is-xsmall" value="Submit">
+                        </div>
+                      </form>
                     </div>
                     <div class="ticket_comment-wrap">
                     <div>Ticket comments</div>
