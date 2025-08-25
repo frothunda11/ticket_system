@@ -10,7 +10,7 @@ if ($id > 0) {
     $stmt->bind_result($file_name, $file_data);
 
     if ($stmt->fetch()) {
-        // Determine MIME type from file extension
+        // Detect MIME type from file extension
         $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
         $mime_types = [
             'jpg' => 'image/jpeg',
@@ -23,7 +23,6 @@ if ($id > 0) {
 
         header('Content-Type: ' . $content_type);
         header('Content-Disposition: inline; filename="' . basename($file_name) . '"');
-        // For binary data, echo directly
         echo $file_data;
         exit;
     }

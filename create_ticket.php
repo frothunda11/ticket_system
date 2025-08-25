@@ -75,18 +75,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ticket_id = $stmt->insert_id;
 
         // Handle file upload if present
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $finfo->file($_FILES['attachment']['tmp_name']);
         if (!empty($_FILES['attachment']['name'])) {
             $filename = basename($_FILES['attachment']['name']);
             $fileData = file_get_contents($_FILES['attachment']['tmp_name']);
             $uploaded_by = $_SESSION['username'] ?? $created_by;
 
-            $stmt_attach = $db->prepare("
-                INSERT INTO ticket_attachments (ticket_id, file_data, file_name, comment_id, uploaded_by)
-                VALUES (?, ?, ?, NULL, ?)
-            ");
-            $null = NULL; // placeholder for file_data (b param)
-            $stmt_attach->bind_param("ibss", $ticket_id, $null, $filename, $uploaded_by);
-            $stmt_attach->send_long_data(1, $fileData); // index 1 is the second param (file_data)
+           $stmt_attach = $db->prepare("
+    INSERT INTO ticket_attachments (ticket_id, file_data, file_name, mime_type, comment_id, uploaded_by)
+    VALUES (?, ?, ?, ?, NULL, ?)
+");
+$stmt_attach->bind_param("ibsss", $ticket_id, $null, $filename, $mime_type, $uploaded_by);
+$stmt_attach->send_long_data(1, $fileData);
+$stmt_attach->execute();
             if (!$stmt_attach->execute()) {
                 $error .= " File upload failed.";
             }
