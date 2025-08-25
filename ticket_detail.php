@@ -182,7 +182,7 @@ $db->close();
                 <form method="post">
                   <div class="ticket_info">
                       <div class="ticket_heading-row">
-                        <div class="text-weight-semibold"><?= htmlspecialchars($ticket['title'] ?? '') ?></div>
+                        <div class="text-weight-semibold text-size-large"><?= htmlspecialchars($ticket['title'] ?? '') ?></div>
                         <div class="text-size-small"><?= htmlspecialchars($ticket['description'] ?? '') ?></div>
                       </div>
                       <div class="ticket_info-wrap">

@@ -139,40 +139,42 @@ if ($is_htmx) {
                 >
             </div>
                 <div class="spacer-small"> </div>
+                <div class="table_instance"> 
 
-                <table class="table_table">
-                  <thead class="table_head">
-                    <tr class="table_row">
-                      <th class="table_header">ID</th>
-                      <th class="table_header">Title</th>
-                      <th class="table_header">Facility</th>
-                      <th class="table_header">Status</th>
-                      <th class="table_header">Priority</th>
-                      <th class="table_header">Created At</th>
-                      <th class="table_header">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tickets-table-body">
-                    <?php foreach ($tickets as $t): ?>
+                  <table class="table_table">
+                    <thead class="table_head">
                       <tr class="table_row">
-                        <td class="table_cell">
-                          <a href="ticket_detail.php?id=<?= htmlspecialchars($t['id']) ?>" style="color: #0074d9; text-decoration: underline;">
-                            <?= htmlspecialchars($t['id']) ?>
-                          </a>
-                        </td>
-                        <td class="table_cell"><?= htmlspecialchars($t['title']) ?></td>
-                        <td class="table_cell"><?= htmlspecialchars($t['facility_name']) ?></td>
-                        <td class="table_cell"><?= htmlspecialchars($t['status_name']) ?></td>
-                        <td class="table_cell"><?= htmlspecialchars($t['priority_name']) ?></td>
-                        <td class="table_cell"><?= htmlspecialchars($t['created_at']) ?></td>
-                        <td class="table_cell"><?= htmlspecialchars($t['description']) ?></td>
+                        <th class="table_header">ID</th>
+                        <th class="table_header">Title</th>
+                        <th class="table_header">Facility</th>
+                        <th class="table_header">Status</th>
+                        <th class="table_header">Priority</th>
+                        <th class="table_header">Created At</th>
+                        <th class="table_header">Description</th>
                       </tr>
-                    <?php endforeach; ?>
-                    <?php if (empty($tickets)): ?>
-                      <tr><td colspan="7">No tickets found.</td></tr>
-                    <?php endif; ?>
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody id="tickets-table-body">
+                      <?php foreach ($tickets as $t): ?>
+                        <tr class="table_row">
+                          <td class="table_cell">
+                            <a href="ticket_detail.php?id=<?= htmlspecialchars($t['id']) ?>" style="color: #0074d9; text-decoration: underline;">
+                              <?= htmlspecialchars($t['id']) ?>
+                            </a>
+                          </td>
+                          <td class="table_cell"><?= htmlspecialchars($t['title']) ?></td>
+                          <td class="table_cell"><?= htmlspecialchars($t['facility_name']) ?></td>
+                          <td class="table_cell"><?= htmlspecialchars($t['status_name']) ?></td>
+                          <td class="table_cell"><?= htmlspecialchars($t['priority_name']) ?></td>
+                          <td class="table_cell"><?= htmlspecialchars($t['created_at']) ?></td>
+                          <td class="table_cell"><?= htmlspecialchars($t['description']) ?></td>
+                        </tr>
+                      <?php endforeach; ?>
+                      <?php if (empty($tickets)): ?>
+                        <tr><td colspan="7">No tickets found.</td></tr>
+                      <?php endif; ?>
+                    </tbody>
+                  </table>
+                </div>
 
               
             </div>

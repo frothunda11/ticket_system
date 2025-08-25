@@ -2253,6 +2253,10 @@ figcaption {
   font-size: 1rem;
   line-height: 1.6;
 }
+.form-input-file{
+  margin-bottom: 7px;
+}
+
 .form-input-small {
   color: #000;
   background-color: #fff;

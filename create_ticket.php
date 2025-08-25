@@ -80,6 +80,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+//upload file/image
+if ($stmt->execute()) {
+    $success = "Ticket created successfully!";
+
+    // Get the ID of the newly created ticket
+    $ticket_id = $stmt->insert_id;
+
+    // Handle file upload if present
+    if (!empty($_FILES['attachment']['name'])) {
+        $upload_dir = 'uploads/';
+        $filename = basename($_FILES['attachment']['name']);
+        $target_file = $upload_dir . uniqid() . '_' . $filename;
+
+        if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_file)) {
+            // Save to ticket_attachments table
+            $uploaded_by = $_SESSION['username'] ?? $created_by;
+            $stmt_attach = $db->prepare("
+                INSERT INTO ticket_attachments (ticket_id, file_path, comment_id, uploaded_by)
+                VALUES (?, ?, NULL, ?)
+            ");
+            $stmt_attach->bind_param("iss", $ticket_id, $target_file, $uploaded_by);
+            $stmt_attach->execute();
+            $stmt_attach->close();
+        } else {
+            $error .= " File upload failed.";
+        }
+    }
+} else {
+    $error = "Error creating ticket: " . $stmt->error;
+}
+
 $db->close();
 ?>
 
@@ -127,7 +158,7 @@ $db->close();
             <div class="container-large">
               <div class="shell-layout_component">
                 <div class="form-block">
-                  <form method="POST" name="create_ticket" class="form" >
+                  <form method="POST" enctype="multipart/form-data" name="create_ticket" class="form">
                     <div class="form_2col">
                         <div class="form-field-wrapper">
                             <label for="title" class="field-label">Ticket Name</label>
@@ -165,24 +196,30 @@ $db->close();
                         </div>
                     </div>
                     <div class="form_2col">
-                        <div class="form-field-wrapper">
+                      <div class="form-field-wrapper">
                         <label for="related_ticket" class="field-label">Related Ticket</label>
                         <select name="related_ticket" class="form-input">
                             <option value="">Escoge uno...</option>
                             <?= $related_ticket_options ?>
                         </select>
                       </div>
-                        <div class="form-field-wrapper"><label for="assigned_to" class="field-label">Assigned To</label>
-                          <select name="assigned_to" class="form-input" >
-                              <option value="">Choose one...</option>
-                              <?= $assigned_to_options ?>   
-                          </select>
-                        </div>
+                      <div class="form-field-wrapper"><label for="assigned_to" class="field-label">Assigned To</label>
+                        <select name="assigned_to" class="form-input" >
+                            <option value="">Choose one...</option>
+                            <?= $assigned_to_options ?>   
+                        </select>
+                      </div>
                     </div>
+                    <div class="form_2col">
                       <div class="form-field-wrapper">
                         <label for="description" class="field-label">Description</label>
                         <textarea class="form-input-textarea" rows="3" name="description" type="text"></textarea>
                       </div>
+                      <div class="form-field-wrapper">
+                        <label for="attachment" class="field-label">Attachment (image/file)</label>
+                        <input type="file" name="attachment" class="form-input-file" accept="image/*,.pdf">
+                      </div>
+                   </div>
                     <div>
                         <button class="button" type="submit">Save</button>
                     </div>
