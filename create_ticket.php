@@ -72,8 +72,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $related_ticket_id
         );
         if ($stmt->execute()) {
-            $success = "Ticket created successfully!";
-        } else {
+          $success = "Ticket created successfully!";
+          $ticket_id = $stmt->insert_id;
+
+        // Handle file upload if present
+            if (!empty($_FILES['attachment']['name'])) {
+            $upload_dir = 'uploads/';
+            $filename = basename($_FILES['attachment']['name']);
+            $target_file = $upload_dir . uniqid() . '_' . $filename;
+
+            if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_file)) {
+                // Save to ticket_attachments table
+                $uploaded_by = $_SESSION['username'] ?? $created_by;
+                $stmt_attach = $db->prepare("
+                    INSERT INTO ticket_attachments (ticket_id, file_path, comment_id, uploaded_by)
+                    VALUES (?, ?, NULL, ?)
+                ");
+                $stmt_attach->bind_param("iss", $ticket_id, $target_file, $uploaded_by);
+                $stmt_attach->execute();
+                $stmt_attach->close();
+            } else {
+                $error .= " File upload failed.";
+            }
+        }
+    } else {
             $error = "Error creating ticket: " . $stmt->error;
         }
         $stmt->close();
